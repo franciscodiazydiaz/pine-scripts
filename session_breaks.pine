@@ -1,0 +1,70 @@
+// This source code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
+// © bobina22
+//@version=5
+indicator("Day, Week & Month Session Breaks", overlay=true)
+
+time_zone = input.string(title="Time Zone", defval="GMT+0", options=[
+     "GMT-10","GMT-7", "GMT-6", "GMT-5", "GMT-4", "GMT-3", "GMT+0", "GMT+1", "GMT+2",
+     "GMT+3", "GMT+3:30", "GMT+4","GMT+5", "GMT+5:30", "GMT+6", "GMT+7", "GMT+8",
+     "GMT+9", "GMT+9:30", "GMT+10:30", "GMT+10", "GMT+11", "GMT+13", "GMT+13:45"])
+
+show_days_of_week = input.bool(true, "Show Days of Week", group="Days of Week")
+days_of_week_color = input.color(color.gray, "Days of Week Color", group="Days of Week")
+
+show_weekly_break_intraday = input.bool(true, "Show Weekly Session in Intraday", group="Session Breaks")
+show_monthly_break_intraday = input.bool(true, "Show Monthly Session in Intraday", group="Session Breaks")
+session_break_color = input.color(color.gray, "Session Break Color", group="Session Breaks")
+
+
+day_text_offset() =>
+    timeframe.isminutes ? 720 / int(timeframe.multiplier) : 0 // 12h / 2 = 720 min
+
+
+vline(BarIndex, Color, LineStyle, LineWidth) => // Verticle Line, 54 lines maximum allowable per indicator
+    line.new(BarIndex, 0, BarIndex, 1, extend=extend.both, color=Color, style=LineStyle, width=LineWidth)
+
+
+// Function from https://www.tradingview.com/script/v1fxzUz3-Month-week-breaks/
+is_new(resolution) =>
+    t = time(resolution)
+    not na(t) and (na(t[1]) or t > t[1])
+
+
+// Anything that defines a local scope cannot call `plot` or `plotshape`
+plotshape(timeframe.isintraday and show_days_of_week and dayofweek == dayofweek.monday and hour == 0 and minute == 0,
+     title="Monday", style=shape.labeldown, location=location.bottom, color=color.new(color.white, 100),
+     offset=day_text_offset(), text="Monday", textcolor=days_of_week_color, editable=true, size=size.tiny)
+
+plotshape(timeframe.isintraday and show_days_of_week and dayofweek == dayofweek.tuesday and hour == 0 and minute == 0,
+     title="Tuesday", style=shape.labeldown, location=location.bottom, color=color.new(color.white, 100),
+     offset=day_text_offset(), text="Tuesday", textcolor=days_of_week_color, editable=true, size=size.tiny)
+
+plotshape(timeframe.isintraday and show_days_of_week and dayofweek == dayofweek.wednesday and hour == 0 and minute == 0,
+     title="Wednesday", style=shape.labeldown, location=location.bottom, color=color.new(color.white, 100),
+     offset=day_text_offset(), text="Wednesday", textcolor=days_of_week_color, editable=true, size=size.tiny)
+
+plotshape(timeframe.isintraday and show_days_of_week and dayofweek == dayofweek.thursday and hour == 0 and minute == 0,
+     title="Thursday", style=shape.labeldown, location=location.bottom, color=color.new(color.white, 100),
+     offset=day_text_offset(), text="Thursday", textcolor=days_of_week_color, editable=true, size=size.tiny)
+
+plotshape(timeframe.isintraday and show_days_of_week and dayofweek == dayofweek.friday and hour == 0 and minute == 0,
+     title="Friday", style=shape.labeldown, location=location.bottom, color=color.new(color.white, 100),
+     offset=day_text_offset(), text="Friday", textcolor=days_of_week_color, editable=true, size=size.tiny)
+
+plotshape(timeframe.isintraday and show_days_of_week and dayofweek == dayofweek.saturday and hour == 0 and minute == 0,
+     title="Saturday", style=shape.labeldown, location=location.bottom, color=color.new(color.white, 100),
+     offset=day_text_offset(), text="Saturday", textcolor=days_of_week_color, editable=true, size=size.tiny)
+
+plotshape(timeframe.isintraday and show_days_of_week and dayofweek == dayofweek.sunday and hour == 0 and minute == 0,
+     title="Sunday", style=shape.labeldown, location=location.bottom, color=color.new(color.white, 100),
+     offset=day_text_offset(), text="Sunday", textcolor=days_of_week_color, editable=true, size=size.tiny)
+
+if is_new('W') and show_weekly_break_intraday and timeframe.isintraday
+    _timestamp = timestamp(time_zone, year, month, dayofmonth, 00, 00, 00)
+    line.new(x1=_timestamp, y1=open, x2=_timestamp, y2=close, xloc=xloc.bar_time,
+         extend=extend.both, color=session_break_color, style=line.style_solid, width=1)
+
+if is_new('M') and ((timeframe.isdaily or timeframe.isweekly) or (show_monthly_break_intraday and timeframe.isintraday))
+    _timestamp = timestamp(time_zone, year, month, 1, 00, 00, 00)
+    line.new(x1=_timestamp, y1=open, x2=_timestamp, y2=close, xloc=xloc.bar_time,
+         extend=extend.both, color=session_break_color, style=line.style_solid, width=2)
